@@ -43,7 +43,7 @@ async function shopifyGraphQL(query: string, variables?: Record<string, any>) {
   const token = await getAccessToken();
 
   const res = await fetch(
-    `https://${SHOPIFY_STORE_DOMAIN}/admin/api/2024-10/graphql.json`,
+    `https://${SHOPIFY_STORE_DOMAIN}/admin/api/2026-01/graphql.json`,
     {
       method: "POST",
       headers: {
