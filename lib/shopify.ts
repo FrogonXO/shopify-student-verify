@@ -1,14 +1,54 @@
+import { createHmac, timingSafeEqual } from "crypto";
+
 const SHOPIFY_STORE_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN!;
-const SHOPIFY_ACCESS_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN!;
+const SHOPIFY_CLIENT_ID = process.env.SHOPIFY_CLIENT_ID!;
+const SHOPIFY_CLIENT_SECRET = process.env.SHOPIFY_CLIENT_SECRET!;
+
+// Cache the access token in memory (lasts ~24h)
+let cachedToken: { token: string; expiresAt: number } | null = null;
+
+async function getAccessToken(): Promise<string> {
+  // Return cached token if still valid (with 5 min buffer)
+  if (cachedToken && Date.now() < cachedToken.expiresAt - 5 * 60 * 1000) {
+    return cachedToken.token;
+  }
+
+  const res = await fetch(
+    `https://${SHOPIFY_STORE_DOMAIN}/admin/oauth/access_token`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        grant_type: "client_credentials",
+        client_id: SHOPIFY_CLIENT_ID,
+        client_secret: SHOPIFY_CLIENT_SECRET,
+      }),
+    }
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to get Shopify access token: ${res.status}`);
+  }
+
+  const data = await res.json();
+  cachedToken = {
+    token: data.access_token,
+    expiresAt: Date.now() + data.expires_in * 1000,
+  };
+
+  return data.access_token;
+}
 
 async function shopifyGraphQL(query: string, variables?: Record<string, any>) {
+  const token = await getAccessToken();
+
   const res = await fetch(
     `https://${SHOPIFY_STORE_DOMAIN}/admin/api/2024-10/graphql.json`,
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-Shopify-Access-Token": SHOPIFY_ACCESS_TOKEN,
+        "X-Shopify-Access-Token": token,
       },
       body: JSON.stringify({ query, variables }),
     }
@@ -17,7 +57,6 @@ async function shopifyGraphQL(query: string, variables?: Record<string, any>) {
 }
 
 export async function releaseOrderHold(shopifyOrderId: string) {
-  // First, get the fulfillment orders for this order
   const orderGid = `gid://shopify/Order/${shopifyOrderId}`;
 
   const fulfillmentQuery = `
@@ -83,18 +122,9 @@ export async function cancelOrder(shopifyOrderId: string) {
   });
 }
 
-export function verifyWebhook(
-  body: string,
-  hmacHeader: string
-): boolean {
-  const crypto = require("crypto");
-  const secret = process.env.SHOPIFY_WEBHOOK_SECRET!;
-  const digest = crypto
-    .createHmac("sha256", secret)
+export function verifyWebhook(body: string, hmacHeader: string): boolean {
+  const digest = createHmac("sha256", SHOPIFY_CLIENT_SECRET)
     .update(body, "utf8")
     .digest("base64");
-  return crypto.timingSafeEqual(
-    Buffer.from(digest),
-    Buffer.from(hmacHeader)
-  );
+  return timingSafeEqual(Buffer.from(digest), Buffer.from(hmacHeader));
 }
