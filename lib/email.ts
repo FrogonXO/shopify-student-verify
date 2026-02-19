@@ -1,6 +1,6 @@
 import { Resend } from "resend";
 
-const FROM_EMAIL = "verify@studentverify.com"; // Update with your verified domain in Resend
+const FROM_EMAIL = process.env.FROM_EMAIL || "verify@edubook.at";
 
 function getResend() {
   return new Resend(process.env.RESEND_API_KEY!);
