@@ -20,10 +20,14 @@ export async function GET(req: NextRequest) {
 
   // Release all on-hold orders for this customer in Shopify
   for (const orderId of result.orderIds) {
-    await releaseOrderHold(orderId);
+    try {
+      await releaseOrderHold(orderId);
+    } catch (err) {
+      console.error(`Failed to release order ${orderId}:`, err);
+    }
   }
 
-  // Redirect to success page
+  // Redirect to success page regardless — the verification is saved in DB
   const successUrl = new URL("/verify/success", process.env.APP_URL);
   successUrl.searchParams.set("email", result.studentEmail);
   return NextResponse.redirect(successUrl.toString());

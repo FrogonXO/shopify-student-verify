@@ -26,11 +26,12 @@ async function getAccessToken(): Promise<string> {
     }
   );
 
-  if (!res.ok) {
-    throw new Error(`Failed to get Shopify access token: ${res.status}`);
-  }
-
   const data = await res.json();
+
+  if (!res.ok) {
+    console.error("Shopify token error:", JSON.stringify(data));
+    throw new Error(`Failed to get Shopify access token: ${res.status} - ${JSON.stringify(data)}`);
+  }
   cachedToken = {
     token: data.access_token,
     expiresAt: Date.now() + data.expires_in * 1000,
