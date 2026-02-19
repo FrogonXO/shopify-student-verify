@@ -12,6 +12,15 @@ export async function isEmailVerified(purchaseEmail: string): Promise<boolean> {
   return rows.length > 0;
 }
 
+export async function autoVerifyStudent(purchaseEmail: string) {
+  const sql = getDb();
+  await sql`
+    INSERT INTO verified_students (purchase_email, student_email)
+    VALUES (${purchaseEmail.toLowerCase()}, ${purchaseEmail.toLowerCase()})
+    ON CONFLICT (purchase_email) DO NOTHING
+  `;
+}
+
 export async function createPendingVerification(
   purchaseEmail: string,
   studentEmail: string,

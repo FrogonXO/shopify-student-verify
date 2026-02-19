@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyWebhook, activateVerifiedCustomer } from "@/lib/shopify";
-import { isEmailVerified, storeOrder } from "@/lib/db";
+import { isEmailVerified, storeOrder, autoVerifyStudent } from "@/lib/db";
+import { isValidStudentEmail } from "@/lib/utils";
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -26,7 +27,14 @@ export async function POST(req: NextRequest) {
   await storeOrder(shopifyOrderId, email);
 
   // Check if this email is already verified
-  const verified = await isEmailVerified(email);
+  let verified = await isEmailVerified(email);
+
+  // If not verified, check if the purchase email itself is a student email
+  if (!verified && isValidStudentEmail(email)) {
+    console.log(`Auto-verifying student email: ${email}`);
+    await autoVerifyStudent(email);
+    verified = true;
+  }
 
   if (verified) {
     try {
