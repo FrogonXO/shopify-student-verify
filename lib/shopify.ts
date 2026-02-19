@@ -123,7 +123,8 @@ export async function cancelOrder(shopifyOrderId: string) {
 }
 
 export function verifyWebhook(body: string, hmacHeader: string): boolean {
-  const digest = createHmac("sha256", SHOPIFY_CLIENT_SECRET)
+  const secret = process.env.SHOPIFY_WEBHOOK_SECRET!;
+  const digest = createHmac("sha256", secret)
     .update(body, "utf8")
     .digest("base64");
   return timingSafeEqual(Buffer.from(digest), Buffer.from(hmacHeader));
