@@ -1,20 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyWebhook } from "@/lib/shopify";
+import { verifyWebhook, activateVerifiedCustomer } from "@/lib/shopify";
 import { isEmailVerified, storeOrder } from "@/lib/db";
-import { releaseOrderHold } from "@/lib/shopify";
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
   const hmac = req.headers.get("x-shopify-hmac-sha256") || "";
-
-  console.log("Webhook received:", {
-    hasBody: body.length > 0,
-    bodyLength: body.length,
-    hasHmac: hmac.length > 0,
-    hmacValue: hmac.substring(0, 10) + "...",
-    hasSecret: !!process.env.SHOPIFY_CLIENT_SECRET,
-    secretPrefix: process.env.SHOPIFY_CLIENT_SECRET?.substring(0, 8) + "...",
-  });
 
   // Verify the webhook is from Shopify
   if (!verifyWebhook(body, hmac)) {
@@ -39,8 +29,11 @@ export async function POST(req: NextRequest) {
   const verified = await isEmailVerified(email);
 
   if (verified) {
-    // Release the hold automatically
-    await releaseOrderHold(shopifyOrderId);
+    try {
+      await activateVerifiedCustomer(email, [shopifyOrderId]);
+    } catch (err) {
+      console.error("Failed to activate order for verified customer:", err);
+    }
   }
 
   return NextResponse.json({ ok: true, verified });

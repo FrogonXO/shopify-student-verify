@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { confirmVerification } from "@/lib/db";
-import { releaseOrderHold } from "@/lib/shopify";
+import { activateVerifiedCustomer } from "@/lib/shopify";
 
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token");
@@ -18,13 +18,11 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  // Release all on-hold orders for this customer in Shopify
-  for (const orderId of result.orderIds) {
-    try {
-      await releaseOrderHold(orderId);
-    } catch (err) {
-      console.error(`Failed to release order ${orderId}:`, err);
-    }
+  // Tag customer, set metafield, and release all on-hold orders
+  try {
+    await activateVerifiedCustomer(result.purchaseEmail, result.orderIds);
+  } catch (err) {
+    console.error("Failed to activate customer in Shopify:", err);
   }
 
   // Redirect to success page regardless — the verification is saved in DB

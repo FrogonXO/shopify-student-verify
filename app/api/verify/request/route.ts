@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { isEmailVerified, createPendingVerification, findPendingOrderId } from "@/lib/db";
 import { isValidStudentEmail, generateToken } from "@/lib/utils";
 import { sendVerificationEmail } from "@/lib/email";
-import { releaseOrderHold } from "@/lib/shopify";
+import { activateVerifiedCustomer } from "@/lib/shopify";
 
 export async function POST(req: NextRequest) {
   const { purchaseEmail, studentEmail } = await req.json();
@@ -17,10 +17,14 @@ export async function POST(req: NextRequest) {
   // Check if already verified
   const alreadyVerified = await isEmailVerified(purchaseEmail);
   if (alreadyVerified) {
-    // Release any on-hold orders just in case
+    // Activate any on-hold orders just in case
     const orderId = await findPendingOrderId(purchaseEmail);
     if (orderId) {
-      await releaseOrderHold(orderId);
+      try {
+        await activateVerifiedCustomer(purchaseEmail, [orderId]);
+      } catch (err) {
+        console.error("Failed to activate verified customer:", err);
+      }
     }
     return NextResponse.json({ alreadyVerified: true });
   }
