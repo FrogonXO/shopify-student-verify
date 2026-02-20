@@ -4,7 +4,7 @@ const SHOPIFY_STORE_DOMAIN = process.env.SHOPIFY_STORE_DOMAIN!;
 const SHOPIFY_CLIENT_ID = process.env.SHOPIFY_CLIENT_ID!;
 const SHOPIFY_CLIENT_SECRET = process.env.SHOPIFY_CLIENT_SECRET!;
 
-// Cache the access token in memory (lasts ~24h)
+// Cache the access token in memory — resets on each deploy
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
 async function getAccessToken(): Promise<string> {
@@ -32,6 +32,8 @@ async function getAccessToken(): Promise<string> {
     console.error("Shopify token error:", JSON.stringify(data));
     throw new Error(`Failed to get Shopify access token: ${res.status} - ${JSON.stringify(data)}`);
   }
+
+  console.log("Shopify token scopes:", data.scope);
 
   cachedToken = {
     token: data.access_token,
