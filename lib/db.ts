@@ -35,14 +35,29 @@ export async function createPendingVerification(
   `;
 }
 
-export async function confirmVerification(token: string) {
+export async function confirmVerification(token: string): Promise<
+  | { status: "success"; purchaseEmail: string; studentEmail: string; orderId: string; orderIds: string[] }
+  | { status: "expired" }
+  | { status: "not_found" }
+> {
   const sql = getDb();
 
   // Find the pending verification
   const rows = await sql`
-    SELECT purchase_email, student_email, order_id FROM pending_verifications WHERE token = ${token}
+    SELECT purchase_email, student_email, order_id, created_at FROM pending_verifications WHERE token = ${token}
   `;
-  if (rows.length === 0) return null;
+  if (rows.length === 0) return { status: "not_found" };
+
+  const { created_at } = rows[0];
+  const createdAt = new Date(created_at);
+  const now = new Date();
+  const hoursSinceCreation = (now.getTime() - createdAt.getTime()) / (1000 * 60 * 60);
+
+  // Check if token is older than 48 hours
+  if (hoursSinceCreation > 48) {
+    await sql`DELETE FROM pending_verifications WHERE token = ${token}`;
+    return { status: "expired" };
+  }
 
   const { purchase_email, student_email, order_id } = rows[0];
 
@@ -69,6 +84,7 @@ export async function confirmVerification(token: string) {
   `;
 
   return {
+    status: "success" as const,
     purchaseEmail: purchase_email,
     studentEmail: student_email,
     orderId: order_id,

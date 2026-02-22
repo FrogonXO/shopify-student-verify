@@ -8,8 +8,7 @@ const LOGO_URL = "https://edubook.at/cdn/shop/files/edubookvivalahardware_Logo.p
 function ConfirmContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token") || "";
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
-  const [errorMessage, setErrorMessage] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "used" | "expired" | "error">("idle");
 
   async function handleConfirm() {
     setStatus("loading");
@@ -20,18 +19,21 @@ function ConfirmContent() {
         body: JSON.stringify({ token }),
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setStatus("error");
-        setErrorMessage(data.error || "Etwas ist schiefgelaufen");
+      if (res.ok) {
+        setStatus("success");
         return;
       }
 
-      setStatus("success");
+      const data = await res.json();
+      if (data.code === "used") {
+        setStatus("used");
+      } else if (data.code === "expired") {
+        setStatus("expired");
+      } else {
+        setStatus("error");
+      }
     } catch {
       setStatus("error");
-      setErrorMessage("Etwas ist schiefgelaufen. Bitte versuche es erneut.");
     }
   }
 
@@ -40,7 +42,12 @@ function ConfirmContent() {
       <div style={styles.container}>
         <div style={styles.card}>
           <img src={LOGO_URL} alt="edubook" style={styles.logo} />
-          <div style={styles.errorBox}>Ungültiger Verifizierungslink.</div>
+          <div style={styles.errorIcon}>!</div>
+          <h1 style={styles.title}>Ungültiger Link</h1>
+          <p style={styles.description}>
+            Dieser Verifizierungslink ist ungültig. Bitte starte den Verifizierungsprozess erneut.
+          </p>
+          <a href="/verify" style={styles.button}>Erneut verifizieren</a>
         </div>
         <a href="https://edubook.at/" style={styles.backLink}>Zurück zu edubook.at</a>
       </div>
@@ -54,11 +61,40 @@ function ConfirmContent() {
 
         {status === "success" ? (
           <>
-            <div style={styles.icon}>&#10003;</div>
+            <div style={styles.successIcon}>&#10003;</div>
             <h1 style={styles.title}>Bildungsstatus bestätigt!</h1>
             <p style={styles.description}>
               Dein Bildungsstatus wurde erfolgreich verifiziert. Deine Bestellung wird asap bearbeitet.
             </p>
+          </>
+        ) : status === "used" ? (
+          <>
+            <div style={styles.errorIcon}>!</div>
+            <h1 style={styles.title}>Link bereits verwendet</h1>
+            <p style={styles.description}>
+              Dieser Verifizierungslink wurde bereits verwendet. Falls dein Bildungsstatus bereits bestätigt ist, musst du nichts weiter tun.
+            </p>
+            <a href="/verify" style={styles.buttonOutline}>Erneut verifizieren</a>
+          </>
+        ) : status === "expired" ? (
+          <>
+            <div style={styles.errorIcon}>!</div>
+            <h1 style={styles.title}>Link abgelaufen</h1>
+            <p style={styles.description}>
+              Dieser Verifizierungslink ist abgelaufen. Bitte starte den Verifizierungsprozess erneut.
+            </p>
+            <a href="/verify" style={styles.button}>Erneut verifizieren</a>
+          </>
+        ) : status === "error" ? (
+          <>
+            <div style={styles.errorIcon}>!</div>
+            <h1 style={styles.title}>Etwas ist schiefgelaufen</h1>
+            <p style={styles.description}>
+              Bitte versuche es erneut. Falls das Problem bestehen bleibt, kontaktiere service@edubook.at.
+            </p>
+            <button onClick={handleConfirm} style={styles.button}>
+              Erneut versuchen
+            </button>
           </>
         ) : (
           <>
@@ -66,11 +102,6 @@ function ConfirmContent() {
             <p style={styles.description}>
               Klicke auf den Button, um deinen Bildungsstatus zu bestätigen und deine Bestellung zu aktivieren.
             </p>
-
-            {status === "error" && (
-              <div style={styles.errorBox}>{errorMessage}</div>
-            )}
-
             <button
               onClick={handleConfirm}
               disabled={status === "loading"}
@@ -121,13 +152,24 @@ const styles: Record<string, React.CSSProperties> = {
     margin: "0 auto 24px",
     height: "50px",
   },
-  icon: {
+  successIcon: {
     width: "60px",
     height: "60px",
     borderRadius: "50%",
     background: "#f0fdf4",
     color: "#25ba86",
     fontSize: "30px",
+    lineHeight: "60px",
+    margin: "0 auto 20px",
+  },
+  errorIcon: {
+    width: "60px",
+    height: "60px",
+    borderRadius: "50%",
+    background: "#fef2f2",
+    color: "#dc2626",
+    fontSize: "30px",
+    fontWeight: 700,
     lineHeight: "60px",
     margin: "0 auto 20px",
   },
@@ -142,6 +184,7 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: "1.5",
   },
   button: {
+    display: "inline-block",
     background: "#25ba86",
     color: "#fff",
     border: "none",
@@ -151,15 +194,23 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     cursor: "pointer",
     width: "100%",
+    textDecoration: "none",
+    textAlign: "center" as const,
   },
-  errorBox: {
-    background: "#fef2f2",
-    border: "1px solid #fecaca",
+  buttonOutline: {
+    display: "inline-block",
+    background: "transparent",
+    color: "#25ba86",
+    border: "2px solid #25ba86",
+    padding: "10px 24px",
     borderRadius: "8px",
-    padding: "12px",
-    color: "#dc2626",
-    fontSize: "14px",
-    marginBottom: "16px",
+    fontSize: "15px",
+    fontWeight: 600,
+    cursor: "pointer",
+    width: "100%",
+    textDecoration: "none",
+    textAlign: "center" as const,
+    boxSizing: "border-box" as const,
   },
   backLink: {
     marginTop: "20px",

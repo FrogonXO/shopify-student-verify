@@ -6,15 +6,22 @@ export async function POST(req: NextRequest) {
   const { token } = await req.json();
 
   if (!token) {
-    return NextResponse.json({ error: "Token erforderlich" }, { status: 400 });
+    return NextResponse.json({ error: "Token erforderlich", code: "invalid" }, { status: 400 });
   }
 
   const result = await confirmVerification(token);
 
-  if (!result) {
+  if (result.status === "not_found") {
     return NextResponse.json(
-      { error: "Ungültiger oder abgelaufener Verifizierungslink" },
+      { error: "Dieser Link wurde bereits verwendet.", code: "used" },
       { status: 404 }
+    );
+  }
+
+  if (result.status === "expired") {
+    return NextResponse.json(
+      { error: "Dieser Link ist abgelaufen.", code: "expired" },
+      { status: 410 }
     );
   }
 
