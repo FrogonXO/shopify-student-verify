@@ -2,18 +2,18 @@ import { NextRequest, NextResponse } from "next/server";
 import { confirmVerification } from "@/lib/db";
 import { activateVerifiedCustomer } from "@/lib/shopify";
 
-export async function GET(req: NextRequest) {
-  const token = req.nextUrl.searchParams.get("token");
+export async function POST(req: NextRequest) {
+  const { token } = await req.json();
 
   if (!token) {
-    return NextResponse.json({ error: "Token required" }, { status: 400 });
+    return NextResponse.json({ error: "Token erforderlich" }, { status: 400 });
   }
 
   const result = await confirmVerification(token);
 
   if (!result) {
     return NextResponse.json(
-      { error: "Invalid or expired verification link" },
+      { error: "Ungültiger oder abgelaufener Verifizierungslink" },
       { status: 404 }
     );
   }
@@ -25,8 +25,5 @@ export async function GET(req: NextRequest) {
     console.error("Failed to activate customer in Shopify:", err);
   }
 
-  // Redirect to success page regardless — the verification is saved in DB
-  const successUrl = new URL("/verify/success", process.env.APP_URL);
-  successUrl.searchParams.set("email", result.studentEmail);
-  return NextResponse.redirect(successUrl.toString());
+  return NextResponse.json({ ok: true, email: result.studentEmail });
 }

@@ -10,21 +10,22 @@ export async function sendVerificationEmail(
   studentEmail: string,
   token: string
 ) {
-  const confirmUrl = `${process.env.APP_URL}/api/verify/confirm?token=${token}`;
+  // Link to the confirm PAGE (not the API) — user must click a button on the page
+  const confirmUrl = `${process.env.APP_URL}/verify/confirm?token=${token}`;
 
   await getResend().emails.send({
     from: FROM_EMAIL,
     to: studentEmail,
-    subject: "Verify your student email",
+    subject: "edubook - Bildungsstatus bestätigen",
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2>Student Verification</h2>
-        <p>Someone requested to verify this email as a student email. If this was you, click the button below to confirm.</p>
+        <h2>Bildungsstatus bestätigen</h2>
+        <p>Bitte bestätige deine Bildungs-Email, indem du auf den Button klickst.</p>
         <a href="${confirmUrl}"
-           style="display: inline-block; background: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0;">
-          Verify My Student Email
+           style="display: inline-block; background: #25ba86; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0;">
+          Bildungsstatus bestätigen
         </a>
-        <p style="color: #666; font-size: 14px;">If you didn't request this, you can ignore this email.</p>
+        <p style="color: #666; font-size: 14px;">Falls du diese Email nicht angefordert hast, kannst du sie ignorieren.</p>
       </div>
     `,
   });
@@ -36,16 +37,16 @@ export async function sendReminderEmail(purchaseEmail: string) {
   await getResend().emails.send({
     from: FROM_EMAIL,
     to: purchaseEmail,
-    subject: "Reminder: Verify your student status to activate your order",
+    subject: "edubook - Erinnerung: Bildungsstatus verifizieren",
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2>Your order is still on hold</h2>
-        <p>We noticed you haven't verified your student status yet. Your order will be automatically cancelled if not verified within 48 hours of purchase.</p>
+        <h2>Deine Bestellung ist noch in Warteschleife</h2>
+        <p>Wir haben festgestellt, dass du deinen Bildungsstatus noch nicht verifiziert hast. Deine Bestellung wird automatisch storniert, wenn sie nicht innerhalb von 48 Stunden nach dem Kauf verifiziert wird.</p>
         <a href="${verifyUrl}"
-           style="display: inline-block; background: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0;">
-          Verify Now
+           style="display: inline-block; background: #25ba86; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0;">
+          Jetzt verifizieren
         </a>
-        <p style="color: #666; font-size: 14px;">If you've already verified, please disregard this email.</p>
+        <p style="color: #666; font-size: 14px;">Falls du bereits verifiziert bist, ignoriere bitte diese Email.</p>
       </div>
     `,
   });
