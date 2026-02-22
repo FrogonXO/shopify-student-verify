@@ -3,6 +3,8 @@
 import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 
+const LOGO_URL = "https://edubook.at/cdn/shop/files/edubookvivalahardware_Logo.png?height=130&v=1768812725";
+
 function VerifyContent() {
   const searchParams = useSearchParams();
   const [purchaseEmail, setPurchaseEmail] = useState("");
@@ -31,7 +33,7 @@ function VerifyContent() {
 
       if (!res.ok) {
         setStatus("error");
-        setErrorMessage(data.error || "Something went wrong");
+        setErrorMessage(data.error || "Etwas ist schiefgelaufen");
         return;
       }
 
@@ -42,61 +44,64 @@ function VerifyContent() {
       }
     } catch {
       setStatus("error");
-      setErrorMessage("Something went wrong. Please try again.");
+      setErrorMessage("Etwas ist schiefgelaufen. Bitte versuche es erneut.");
     }
   }
 
   return (
     <div style={styles.container}>
       <div style={styles.card}>
-        <h1 style={styles.title}>Student Verification</h1>
+        <img src={LOGO_URL} alt="edubook" style={styles.logo} />
+        <h1 style={styles.title}>Bildungsstatus verifizieren</h1>
 
         {status === "success" ? (
           <div style={styles.successBox}>
-            <h2 style={{ margin: "0 0 8px 0" }}>Check your student email!</h2>
+            <h2 style={{ margin: "0 0 8px 0" }}>Bitte überprüfe deine Bildungs-Email.</h2>
             <p style={{ margin: 0, color: "#666" }}>
-              We sent a verification link to <strong>{studentEmail}</strong>.
-              Click the link in that email to activate your order.
+              Wir haben einen Verifizierungs Link an <strong>{studentEmail}</strong> gesendet.
+              Klicke auf den Link in der Email, damit wir die Bestellung schnellstmöglich durchführen können.
             </p>
           </div>
         ) : status === "already_verified" ? (
           <div style={styles.successBox}>
-            <h2 style={{ margin: "0 0 8px 0" }}>Already verified!</h2>
+            <h2 style={{ margin: "0 0 8px 0" }}>Bereits bestätigt!</h2>
             <p style={{ margin: 0, color: "#666" }}>
-              Your email is already verified. Your order will be activated automatically.
+              Dein Bildungsstatus ist bestätigt, deine Bestellung wird asap bearbeitet.
             </p>
           </div>
         ) : (
           <>
             <p style={styles.description}>
-              Enter your purchase email and student email to verify your student
-              status and activate your order.
+              Gib deine Bestellungs-Email und deine Uni- bzw. Schul-Email an.
             </p>
 
             <form onSubmit={handleSubmit} style={styles.form}>
               <div style={styles.field}>
-                <label style={styles.label}>Purchase Email</label>
+                <label style={styles.label}>Email deiner Bestellung</label>
                 <input
                   type="email"
                   value={purchaseEmail}
                   onChange={(e) => setPurchaseEmail(e.target.value)}
-                  placeholder="your@email.com"
+                  placeholder="deine@email.com"
                   required
                   style={styles.input}
                 />
               </div>
 
               <div style={styles.field}>
-                <label style={styles.label}>Student Email</label>
+                <label style={styles.label}>Bildungs-Email</label>
                 <input
                   type="email"
                   value={studentEmail}
                   onChange={(e) => setStudentEmail(e.target.value)}
-                  placeholder="your@university.ac.at"
+                  placeholder="deine@universität.ac.at"
                   required
                   style={styles.input}
                 />
-                <span style={styles.hint}>Must be a .edu or .ac.at email address</span>
+                <span style={styles.hint}>
+                  Die Bildungsemail muss eine .edu oder eine .ac.at - Adresse sein.
+                  Bei Problemen, sende eine Email an service@edubook.at mit deiner Bestell-Email + einem Beleg deines Bildungsstatus
+                </span>
               </div>
 
               {status === "error" && (
@@ -111,12 +116,13 @@ function VerifyContent() {
                   opacity: status === "loading" ? 0.6 : 1,
                 }}
               >
-                {status === "loading" ? "Sending..." : "Verify Student Status"}
+                {status === "loading" ? "Wird gesendet..." : "Bildungsstatus verifizieren"}
               </button>
             </form>
           </>
         )}
       </div>
+      <a href="https://edubook.at/" style={styles.backLink}>Zurück zu edubook.at</a>
     </div>
   );
 }
@@ -133,6 +139,7 @@ const styles: Record<string, React.CSSProperties> = {
   container: {
     minHeight: "100vh",
     display: "flex",
+    flexDirection: "column" as const,
     alignItems: "center",
     justifyContent: "center",
     background: "#f5f5f5",
@@ -145,6 +152,11 @@ const styles: Record<string, React.CSSProperties> = {
     maxWidth: "460px",
     width: "100%",
     boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+  },
+  logo: {
+    display: "block",
+    margin: "0 auto 24px",
+    height: "50px",
   },
   title: {
     margin: "0 0 8px 0",
@@ -180,9 +192,10 @@ const styles: Record<string, React.CSSProperties> = {
   hint: {
     fontSize: "12px",
     color: "#999",
+    lineHeight: "1.5",
   },
   button: {
-    background: "#000",
+    background: "#25ba86",
     color: "#fff",
     border: "none",
     padding: "12px",
@@ -205,5 +218,11 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "12px",
     color: "#dc2626",
     fontSize: "14px",
+  },
+  backLink: {
+    marginTop: "20px",
+    color: "#666",
+    fontSize: "14px",
+    textDecoration: "none",
   },
 };

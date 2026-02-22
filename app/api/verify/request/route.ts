@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
 
   if (!purchaseEmail || !studentEmail) {
     return NextResponse.json(
-      { error: "Both purchase email and student email are required" },
+      { error: "Bitte gib beide Email-Adressen ein" },
       { status: 400 }
     );
   }
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   // Validate student email domain
   if (!isValidStudentEmail(studentEmail)) {
     return NextResponse.json(
-      { error: "Student email must be a .edu or .ac.at address" },
+      { error: "Die Bildungsemail muss eine .edu oder eine .ac.at - Adresse sein. Bei Problemen, sende eine Email an service@edubook.at mit deiner Bestell-Email + einem Beleg deines Bildungsstatus" },
       { status: 400 }
     );
   }
@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   const orderId = await findPendingOrderId(purchaseEmail);
   if (!orderId) {
     return NextResponse.json(
-      { error: "No pending order found for this email. Please use the email you purchased with." },
+      { error: "Keine offene Bestellung von dieser Email gefunden. Bitte überprüfe deine Eingabe bei \"Email deiner Bestellung\"" },
       { status: 404 }
     );
   }

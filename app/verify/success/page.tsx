@@ -3,6 +3,8 @@
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
+const LOGO_URL = "https://edubook.at/cdn/shop/files/edubookvivalahardware_Logo.png?height=130&v=1768812725";
+
 function SuccessContent() {
   const searchParams = useSearchParams();
   const email = searchParams.get("email") || "";
@@ -10,17 +12,18 @@ function SuccessContent() {
   return (
     <div style={styles.container}>
       <div style={styles.card}>
+        <img src={LOGO_URL} alt="edubook" style={styles.logo} />
         <div style={styles.icon}>&#10003;</div>
-        <h1 style={styles.title}>Student Status Verified!</h1>
+        <h1 style={styles.title}>Bildungsstatus bestätigt!</h1>
         <p style={styles.description}>
-          Your student email has been confirmed. Your order is now being
-          activated and will be processed shortly.
+          Dein Bildungsstatus wurde erfolgreich verifiziert. Deine Bestellung wird asap bearbeitet.
         </p>
         {email && (
-          <p style={styles.email}>Verified email: <strong>{email}</strong></p>
+          <p style={styles.email}>Verifizierte Email: <strong>{email}</strong></p>
         )}
-        <p style={styles.hint}>You can close this page.</p>
+        <p style={styles.hint}>Du kannst diese Seite schließen.</p>
       </div>
+      <a href="https://edubook.at/" style={styles.backLink}>Zurück zu edubook.at</a>
     </div>
   );
 }
@@ -37,6 +40,7 @@ const styles: Record<string, React.CSSProperties> = {
   container: {
     minHeight: "100vh",
     display: "flex",
+    flexDirection: "column" as const,
     alignItems: "center",
     justifyContent: "center",
     background: "#f5f5f5",
@@ -51,12 +55,17 @@ const styles: Record<string, React.CSSProperties> = {
     boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
     textAlign: "center" as const,
   },
+  logo: {
+    display: "block",
+    margin: "0 auto 24px",
+    height: "50px",
+  },
   icon: {
     width: "60px",
     height: "60px",
     borderRadius: "50%",
     background: "#f0fdf4",
-    color: "#22c55e",
+    color: "#25ba86",
     fontSize: "30px",
     lineHeight: "60px",
     margin: "0 auto 20px",
@@ -79,5 +88,11 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#999",
     fontSize: "13px",
     marginTop: "20px",
+  },
+  backLink: {
+    marginTop: "20px",
+    color: "#666",
+    fontSize: "14px",
+    textDecoration: "none",
   },
 };

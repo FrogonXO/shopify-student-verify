@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Student Verification",
-  description: "Verify your student status to activate your order",
+  title: "edubook - Bildungsstatus verifizieren",
+  description: "Verifiziere deinen Bildungsstatus, um deine Bestellung zu aktivieren",
 };
 
 export default function RootLayout({
@@ -11,7 +11,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="de">
       <body style={{ margin: 0, fontFamily: "Arial, sans-serif" }}>
         {children}
       </body>
