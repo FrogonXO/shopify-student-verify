@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getStaleReminders, markReminded } from "@/lib/db";
+import { getOrdersNeedingReminder, incrementReminderCount } from "@/lib/db";
 import { sendReminderEmail } from "@/lib/email";
 
 export async function GET(req: NextRequest) {
@@ -9,16 +9,29 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const orders = await getStaleReminders();
   let sent = 0;
 
-  for (const order of orders) {
+  // Send first reminder (24h after order, not yet reminded)
+  const firstReminders = await getOrdersNeedingReminder(1);
+  for (const order of firstReminders) {
     try {
       await sendReminderEmail(order.email);
-      await markReminded(order.id);
+      await incrementReminderCount(order.id);
       sent++;
     } catch (err) {
-      console.error(`Failed to send reminder to ${order.email}:`, err);
+      console.error(`Failed to send 1st reminder to ${order.email}:`, err);
+    }
+  }
+
+  // Send second reminder (48h after order, reminded once)
+  const secondReminders = await getOrdersNeedingReminder(2);
+  for (const order of secondReminders) {
+    try {
+      await sendReminderEmail(order.email);
+      await incrementReminderCount(order.id);
+      sent++;
+    } catch (err) {
+      console.error(`Failed to send 2nd reminder to ${order.email}:`, err);
     }
   }
 

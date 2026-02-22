@@ -101,36 +101,38 @@ export async function storeOrder(shopifyOrderId: string, email: string) {
   `;
 }
 
-export async function getStaleReminders() {
+export async function getOrdersNeedingReminder(reminderNumber: number) {
   const sql = getDb();
-  // Orders older than 24h but less than 48h, still on hold, not yet reminded
+  // reminderNumber 1: orders older than 24h, reminded 0 times
+  // reminderNumber 2: orders older than 48h, reminded 1 time
+  const minAge = reminderNumber === 1 ? "24 hours" : "48 hours";
+
   return await sql`
     SELECT o.shopify_order_id, o.email, o.id
     FROM orders o
     LEFT JOIN verified_students v ON v.purchase_email = o.email
     WHERE o.status = 'on_hold'
-      AND o.reminded = false
+      AND o.reminder_count < ${reminderNumber}
       AND v.id IS NULL
-      AND o.created_at < NOW() - INTERVAL '24 hours'
-      AND o.created_at > NOW() - INTERVAL '48 hours'
+      AND o.created_at < NOW() - INTERVAL ${minAge}
   `;
 }
 
-export async function markReminded(orderId: number) {
+export async function incrementReminderCount(orderId: number) {
   const sql = getDb();
-  await sql`UPDATE orders SET reminded = true WHERE id = ${orderId}`;
+  await sql`UPDATE orders SET reminder_count = reminder_count + 1 WHERE id = ${orderId}`;
 }
 
 export async function getStaleOrders() {
   const sql = getDb();
-  // Orders older than 48h, still on hold
+  // Orders older than 72h (24h after 2nd reminder), still on hold
   return await sql`
     SELECT o.shopify_order_id, o.email, o.id
     FROM orders o
     LEFT JOIN verified_students v ON v.purchase_email = o.email
     WHERE o.status = 'on_hold'
       AND v.id IS NULL
-      AND o.created_at < NOW() - INTERVAL '48 hours'
+      AND o.created_at < NOW() - INTERVAL '72 hours'
   `;
 }
 
