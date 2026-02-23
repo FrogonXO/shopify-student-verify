@@ -4,7 +4,25 @@ export function generateToken(): string {
   return randomBytes(32).toString("hex");
 }
 
-const BLACKLISTED_DOMAINS = ["gmx.at", "liwest.at"];
+const BLACKLISTED_DOMAINS = [
+  "gmx.at",
+  "liwest.at",
+  "live.at",
+  "chello.at",
+  "aon.at",
+  "struktur.at",
+  "webatelier.at",
+  "ibr.co.at",
+  "vbc.at",
+  "sk-net.at",
+  "vogelfarm.at",
+  "cmm-art.at",
+  "heidl.at",
+  "outlook.at",
+  "posteo.at",
+  "salzburger-malerbetrieb.at",
+  "drei.at",
+];
 
 export function isValidStudentEmail(email: string): boolean {
   const lower = email.toLowerCase().trim();
