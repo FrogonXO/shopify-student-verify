@@ -4,7 +4,7 @@ export function generateToken(): string {
   return randomBytes(32).toString("hex");
 }
 
-const BLACKLISTED_DOMAINS = ["gmx.at"];
+const BLACKLISTED_DOMAINS = ["gmx.at", "liwest.at"];
 
 export function isValidStudentEmail(email: string): boolean {
   const lower = email.toLowerCase().trim();
