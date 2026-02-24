@@ -101,20 +101,31 @@ export async function storeOrder(shopifyOrderId: string, email: string) {
   `;
 }
 
-export async function getOrdersNeedingReminder(reminderNumber: number) {
+export async function getOrdersNeedingFirstReminder() {
   const sql = getDb();
-  // reminderNumber 1: orders older than 24h, reminded 0 times
-  // reminderNumber 2: orders older than 48h, reminded 1 time
-  const minAge = reminderNumber === 1 ? "24 hours" : "48 hours";
-
+  // Orders older than 24h, not yet reminded
   return await sql`
     SELECT o.shopify_order_id, o.email, o.id
     FROM orders o
     LEFT JOIN verified_students v ON v.purchase_email = o.email
     WHERE o.status = 'on_hold'
-      AND o.reminder_count < ${reminderNumber}
+      AND o.reminder_count < 1
       AND v.id IS NULL
-      AND o.created_at < NOW() - INTERVAL ${minAge}
+      AND o.created_at < NOW() - INTERVAL '24 hours'
+  `;
+}
+
+export async function getOrdersNeedingSecondReminder() {
+  const sql = getDb();
+  // Orders older than 48h, reminded once
+  return await sql`
+    SELECT o.shopify_order_id, o.email, o.id
+    FROM orders o
+    LEFT JOIN verified_students v ON v.purchase_email = o.email
+    WHERE o.status = 'on_hold'
+      AND o.reminder_count < 2
+      AND v.id IS NULL
+      AND o.created_at < NOW() - INTERVAL '48 hours'
   `;
 }
 

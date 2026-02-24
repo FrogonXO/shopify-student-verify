@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getOrdersNeedingReminder, incrementReminderCount, getStaleOrders, markCancelled, markActivated } from "@/lib/db";
+import { getOrdersNeedingFirstReminder, getOrdersNeedingSecondReminder, incrementReminderCount, getStaleOrders, markCancelled, markActivated } from "@/lib/db";
 import { sendReminderEmail } from "@/lib/email";
 import { cancelOrder, isOrderOnHold } from "@/lib/shopify";
 
@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
   let ordersSynced = 0;
 
   // Send first reminder (24h after order)
-  const firstReminders = await getOrdersNeedingReminder(1);
+  const firstReminders = await getOrdersNeedingFirstReminder();
   for (const order of firstReminders) {
     try {
       // Check if order is actually still on hold in Shopify
@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
   }
 
   // Send second reminder (48h after order)
-  const secondReminders = await getOrdersNeedingReminder(2);
+  const secondReminders = await getOrdersNeedingSecondReminder();
   for (const order of secondReminders) {
     try {
       const stillOnHold = await isOrderOnHold(order.shopify_order_id);
