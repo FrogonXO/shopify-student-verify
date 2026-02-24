@@ -141,6 +141,11 @@ export async function markCancelled(orderId: number) {
   await sql`UPDATE orders SET status = 'cancelled' WHERE id = ${orderId}`;
 }
 
+export async function markActivated(orderId: number) {
+  const sql = getDb();
+  await sql`UPDATE orders SET status = 'activated' WHERE id = ${orderId}`;
+}
+
 export async function findPendingOrderId(purchaseEmail: string): Promise<string | null> {
   const sql = getDb();
   const rows = await sql`

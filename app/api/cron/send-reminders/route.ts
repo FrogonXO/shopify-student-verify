@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getOrdersNeedingReminder, incrementReminderCount, getStaleOrders, markCancelled } from "@/lib/db";
+import { getOrdersNeedingReminder, incrementReminderCount, getStaleOrders, markCancelled, markActivated } from "@/lib/db";
 import { sendReminderEmail } from "@/lib/email";
-import { cancelOrder } from "@/lib/shopify";
+import { cancelOrder, isOrderOnHold } from "@/lib/shopify";
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
@@ -12,17 +12,26 @@ export async function GET(req: NextRequest) {
 
   let remindersSent = 0;
   let ordersCancelled = 0;
+  let ordersSynced = 0;
 
   // Send first reminder (24h after order)
   const firstReminders = await getOrdersNeedingReminder(1);
   for (const order of firstReminders) {
     try {
+      // Check if order is actually still on hold in Shopify
+      const stillOnHold = await isOrderOnHold(order.shopify_order_id);
+      if (!stillOnHold) {
+        await markActivated(order.id);
+        ordersSynced++;
+        console.log(`Order ${order.shopify_order_id} no longer on hold, synced DB`);
+        continue;
+      }
       await sendReminderEmail(order.email);
       await incrementReminderCount(order.id);
       remindersSent++;
       console.log(`Sent 1st reminder to ${order.email}`);
     } catch (err) {
-      console.error(`Failed to send 1st reminder to ${order.email}:`, err);
+      console.error(`Failed to process order ${order.shopify_order_id}:`, err);
     }
   }
 
@@ -30,12 +39,19 @@ export async function GET(req: NextRequest) {
   const secondReminders = await getOrdersNeedingReminder(2);
   for (const order of secondReminders) {
     try {
+      const stillOnHold = await isOrderOnHold(order.shopify_order_id);
+      if (!stillOnHold) {
+        await markActivated(order.id);
+        ordersSynced++;
+        console.log(`Order ${order.shopify_order_id} no longer on hold, synced DB`);
+        continue;
+      }
       await sendReminderEmail(order.email);
       await incrementReminderCount(order.id);
       remindersSent++;
       console.log(`Sent 2nd reminder to ${order.email}`);
     } catch (err) {
-      console.error(`Failed to send 2nd reminder to ${order.email}:`, err);
+      console.error(`Failed to process order ${order.shopify_order_id}:`, err);
     }
   }
 
@@ -43,6 +59,13 @@ export async function GET(req: NextRequest) {
   const staleOrders = await getStaleOrders();
   for (const order of staleOrders) {
     try {
+      const stillOnHold = await isOrderOnHold(order.shopify_order_id);
+      if (!stillOnHold) {
+        await markActivated(order.id);
+        ordersSynced++;
+        console.log(`Order ${order.shopify_order_id} no longer on hold, synced DB`);
+        continue;
+      }
       await cancelOrder(order.shopify_order_id);
       await markCancelled(order.id);
       ordersCancelled++;
@@ -52,6 +75,6 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  console.log(`Cron complete: ${remindersSent} reminders sent, ${ordersCancelled} orders cancelled`);
-  return NextResponse.json({ ok: true, remindersSent, ordersCancelled });
+  console.log(`Cron complete: ${remindersSent} reminders, ${ordersCancelled} cancelled, ${ordersSynced} synced`);
+  return NextResponse.json({ ok: true, remindersSent, ordersCancelled, ordersSynced });
 }

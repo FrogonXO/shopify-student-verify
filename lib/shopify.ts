@@ -234,6 +234,33 @@ export async function cancelOrder(shopifyOrderId: string) {
   });
 }
 
+// Check if an order is actually still on hold in Shopify
+export async function isOrderOnHold(shopifyOrderId: string): Promise<boolean> {
+  const orderGid = `gid://shopify/Order/${shopifyOrderId}`;
+
+  const query = `
+    query getOrderStatus($orderId: ID!) {
+      order(id: $orderId) {
+        displayFulfillmentStatus
+        cancelledAt
+        fulfillmentOrders(first: 10) {
+          nodes {
+            status
+          }
+        }
+      }
+    }
+  `;
+
+  const res = await shopifyGraphQL(query, { orderId: orderGid });
+  const order = res?.data?.order;
+
+  if (!order || order.cancelledAt) return false;
+
+  const fulfillmentOrders = order.fulfillmentOrders?.nodes || [];
+  return fulfillmentOrders.some((fo: any) => fo.status === "ON_HOLD");
+}
+
 export function verifyWebhook(body: string, hmacHeader: string): boolean {
   const secret = process.env.SHOPIFY_WEBHOOK_SECRET!;
   const digest = createHmac("sha256", secret)
