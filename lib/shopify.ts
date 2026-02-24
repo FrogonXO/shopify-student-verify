@@ -243,22 +243,26 @@ export async function isOrderOnHold(shopifyOrderId: string): Promise<boolean> {
       order(id: $orderId) {
         displayFulfillmentStatus
         cancelledAt
-        fulfillmentOrders(first: 10) {
-          nodes {
-            status
-          }
-        }
       }
     }
   `;
 
   const res = await shopifyGraphQL(query, { orderId: orderGid });
+
+  if (res.errors) {
+    throw new Error(`Shopify API error checking order ${shopifyOrderId}: ${JSON.stringify(res.errors)}`);
+  }
+
   const order = res?.data?.order;
 
-  if (!order || order.cancelledAt) return false;
+  if (!order) {
+    throw new Error(`Order ${shopifyOrderId} not found in Shopify`);
+  }
 
-  const fulfillmentOrders = order.fulfillmentOrders?.nodes || [];
-  return fulfillmentOrders.some((fo: any) => fo.status === "ON_HOLD");
+  if (order.cancelledAt) return false;
+
+  // ON_HOLD status shows as "ON_HOLD" in displayFulfillmentStatus
+  return order.displayFulfillmentStatus === "ON_HOLD";
 }
 
 export function verifyWebhook(body: string, hmacHeader: string): boolean {
