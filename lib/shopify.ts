@@ -149,68 +149,11 @@ export async function setCustomerMetafield(email: string) {
   console.log(`Set checkoutblocks.trigger metafield for ${customerId}`);
 }
 
-// Release fulfillment hold on an order
-export async function releaseOrderHold(shopifyOrderId: string) {
-  const orderGid = `gid://shopify/Order/${shopifyOrderId}`;
-
-  const fulfillmentQuery = `
-    query getFulfillmentOrders($orderId: ID!) {
-      order(id: $orderId) {
-        fulfillmentOrders(first: 10) {
-          nodes {
-            id
-            status
-          }
-        }
-      }
-    }
-  `;
-
-  const fulfillmentRes = await shopifyGraphQL(fulfillmentQuery, {
-    orderId: orderGid,
-  });
-
-  const fulfillmentOrders =
-    fulfillmentRes?.data?.order?.fulfillmentOrders?.nodes || [];
-
-  for (const fo of fulfillmentOrders) {
-    if (fo.status === "ON_HOLD") {
-      const releaseMutation = `
-        mutation fulfillmentOrderReleaseHold($id: ID!) {
-          fulfillmentOrderReleaseHold(id: $id) {
-            fulfillmentOrder {
-              id
-              status
-            }
-            userErrors {
-              field
-              message
-            }
-          }
-        }
-      `;
-
-      const res = await shopifyGraphQL(releaseMutation, { id: fo.id });
-      const errors = res?.data?.fulfillmentOrderReleaseHold?.userErrors || [];
-      if (errors.length > 0) {
-        console.error("Failed to release hold:", JSON.stringify(errors));
-      }
-    }
-  }
-
-  console.log(`Released hold for order ${shopifyOrderId}`);
-}
-
-// Activate a verified customer's order: tag, metafield, and release hold
+// Activate a verified customer: tag + metafield triggers Shopify Flow to release holds
 export async function activateVerifiedCustomer(email: string, shopifyOrderIds: string[]) {
-  // Tag customer and set metafield (so future orders auto-release and banner hides)
   await tagCustomerAsVerified(email);
   await setCustomerMetafield(email);
-
-  // Release hold on all current on-hold orders
-  for (const orderId of shopifyOrderIds) {
-    await releaseOrderHold(orderId);
-  }
+  console.log(`Activated customer ${email} for orders: ${shopifyOrderIds.join(", ")}`);
 }
 
 export async function cancelOrder(shopifyOrderId: string) {
