@@ -101,6 +101,13 @@ export async function storeOrder(shopifyOrderId: string, email: string) {
   `;
 }
 
+export async function getAllOnHoldOrders() {
+  const sql = getDb();
+  return await sql`
+    SELECT shopify_order_id, email, id FROM orders WHERE status = 'on_hold'
+  `;
+}
+
 export async function getOrdersNeedingFirstReminder() {
   const sql = getDb();
   // Orders older than 24h, not yet reminded

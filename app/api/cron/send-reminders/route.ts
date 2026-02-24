@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getOrdersNeedingFirstReminder, getOrdersNeedingSecondReminder, incrementReminderCount, getStaleOrders, markCancelled, markActivated } from "@/lib/db";
+import { getAllOnHoldOrders, getOrdersNeedingFirstReminder, getOrdersNeedingSecondReminder, incrementReminderCount, getStaleOrders, markCancelled, markActivated } from "@/lib/db";
 import { sendReminderEmail } from "@/lib/email";
 import { cancelOrder, isOrderOnHold } from "@/lib/shopify";
 
@@ -13,6 +13,21 @@ export async function GET(req: NextRequest) {
   let remindersSent = 0;
   let ordersCancelled = 0;
   let ordersSynced = 0;
+
+  // Sync all on_hold orders with Shopify
+  const allOnHold = await getAllOnHoldOrders();
+  for (const order of allOnHold) {
+    try {
+      const stillOnHold = await isOrderOnHold(order.shopify_order_id);
+      if (!stillOnHold) {
+        await markActivated(order.id);
+        ordersSynced++;
+        console.log(`Sync: Order ${order.shopify_order_id} no longer on hold`);
+      }
+    } catch (err) {
+      console.error(`Sync: Failed to check order ${order.shopify_order_id}:`, err);
+    }
+  }
 
   // Send first reminder (24h after order)
   const firstReminders = await getOrdersNeedingFirstReminder();
