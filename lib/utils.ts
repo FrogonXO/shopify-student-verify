@@ -22,6 +22,21 @@ const BLACKLISTED_DOMAINS = [
   "posteo.at",
   "salzburger-malerbetrieb.at",
   "drei.at",
+  "martino-cycling.at",
+  "anovotni.at",
+  "derstandard.at",
+  "kurier.at",
+  "futurezone.at",
+  "krone.at",
+  "nachrichten.at",
+  "magenta.at",
+  "a1.net",
+  "redbull.at",
+  "red-bull.at",
+  "redbull-mobile.at",
+  "redbullmobile.at",
+  "spusu.at",
+  "kabsi.at",
 ];
 
 export function isValidStudentEmail(email: string): boolean {
