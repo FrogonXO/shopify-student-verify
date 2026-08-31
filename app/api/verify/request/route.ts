@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   // Validate student email domain
   if (!isValidStudentEmail(studentEmail)) {
     return NextResponse.json(
-      { error: "Die Bildungsemail muss eine .edu oder eine .ac.at - Adresse sein. Bei Problemen, sende eine Email an service@edubook.at mit deiner Bestell-Email + einem Beleg deines Bildungsstatus" },
+      { error: "Die Bildungsemail muss eine Emailadresse einer Schule, Uni, FH oder sonstigen staatlich anerkannten Bildungseinrichtung sein. Bei Problemen sende eine Email an service@edustore.at mit deiner Bestellnummer und einem Beleg deines Bildungsstatus (Foto oder Screenshot des Schülerausweises, aktuelles Zeugnis oder ähnliches). Eltern schicken aktuellen Schülerausweis oder aktuelles Zeugnis des Kindes. Erhaltene Daten dienen nur der Verifizierung und werden umgehend gelöscht." },
       { status: 400 }
     );
   }
